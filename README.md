@@ -2,6 +2,10 @@
 
 An interactive single-file HTML application for exploring hyperbolic geometry through five interconnected visualisations.
 
+### [Launch App](https://brendanjameslynskey.github.io/Hyperbolic_Geometry/)
+
+---
+
 ## Features
 
 ### 1. Poincare Disk Model
@@ -35,10 +39,6 @@ An interactive single-file HTML application for exploring hyperbolic geometry th
 - Real-time computation of angles, angle sum (always < pi), and angular defect
 - Hyperbolic area via the Gauss-Bonnet theorem: `Area = pi - (alpha + beta + gamma)`
 - Side-by-side Euclidean comparison (dashed lines)
-
-## Usage
-
-Open `index.html` in any modern web browser. No build step or dependencies required -- the entire application is a single HTML file using vanilla JavaScript and HTML5 Canvas.
 
 ## Technical Details
 
