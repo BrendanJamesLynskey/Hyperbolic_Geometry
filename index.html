@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyperbolic Geometry Visualiser</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root {
+  --bg: #0a0a0f;
+  --surface: #131320;
+  --surface2: #1a1a2e;
+  --border: #2a2a3a;
+  --text: #e0e0e8;
+  --muted: #8888a0;
+  --teal: #2dd4bf;
+  --teal-dim: rgba(45,212,191,0.15);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.15);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.15);
+  --rose: #fb7185;
+  --rose-dim: rgba(251,113,133,0.15);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.15);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+header {
+  text-align: center;
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #10101a 0%, var(--bg) 100%);
+}
+header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--teal), var(--amber), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+header p { color: var(--muted); margin-top: 6px; font-size: 0.92rem; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--teal);
+  border-bottom-color: var(--teal);
+}
+
+/* Main layout */
+.main-container {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  max-width: 1500px;
+  margin: 0 auto;
+  min-height: calc(100vh - 140px);
+}
+.canvas-area {
+  flex: 1;
+  min-width: 0;
+}
+.canvas-area canvas {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: crosshair;
+}
+.side-panel {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.card h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.card h3 {
+  font-size: 0.85rem;
+  color: var(--teal);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* Info text */
+.info-text {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.info-text .formula {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--amber);
+  font-size: 0.8rem;
+  background: var(--amber-dim);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin: 2px 0;
+}
+.info-text .val {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--teal);
+  font-weight: 600;
+}
+
+/* Measurement display */
+.measurement {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+}
+.measurement .label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+  font-family: 'DM Sans', sans-serif;
+}
+.measurement .value {
+  color: var(--teal);
+  font-weight: 600;
+}
+
+/* Controls */
+.control-group { margin-bottom: 12px; }
+.control-group label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+select, input[type=number] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+select:focus, input[type=number]:focus { border-color: var(--teal); }
+select option { background: var(--surface); }
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.slider-row label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-width: 80px;
+  font-weight: 500;
+}
+.slider-row input[type=range] {
+  flex: 1;
+  accent-color: var(--teal);
+  height: 4px;
+  cursor: pointer;
+}
+.slider-row .slider-val {
+  font-size: 0.78rem;
+  color: var(--text);
+  min-width: 50px;
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.btn:hover { border-color: var(--teal); background: var(--teal-dim); }
+.btn.active { background: var(--teal-dim); border-color: var(--teal); color: var(--teal); }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+
+.matrix-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--purple);
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: flex; }
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-line {
+  width: 20px; height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.checkbox-row input[type=checkbox] {
+  accent-color: var(--teal);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+@media (max-width: 900px) {
+  .main-container { flex-direction: column; }
+  .side-panel { width: 100%; max-height: none; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hyperbolic Geometry Visualiser</h1>
+  <p>Explore the Poincare disk, upper half-plane, tilings, isometries, and hyperbolic triangles</p>
+</header>
+<div class="tabs">
+  <button class="tab-btn active" data-tab="poincare">Poincare Disk</button>
+  <button class="tab-btn" data-tab="tiling">Hyperbolic Tilings</button>
+  <button class="tab-btn" data-tab="halfplane">Upper Half-Plane</button>
+  <button class="tab-btn" data-tab="isometry">Isometry Explorer</button>
+  <button class="tab-btn" data-tab="triangle">Hyperbolic Triangle</button>
+</div>
+
+<!-- Tab 1: Poincare Disk -->
+<div class="tab-content active" id="tab-poincare">
+  <div class="main-container">
+    <div class="canvas-area">
+      <canvas id="canvas-poincare"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="card">
+        <h2>Poincare Disk Model</h2>
+        <p class="info-text">Click to place points on the disk. Two points define a hyperbolic geodesic (shown as a circular arc). The boundary circle represents infinity.</p>
+        <div class="btn-row">
+          <button class="btn active" id="pd-mode-geodesic" onclick="setPDMode('geodesic')">Draw Geodesic</button>
+          <button class="btn" id="pd-mode-parallel" onclick="setPDMode('parallel')">Show Parallels</button>
+        </div>
+        <label class="checkbox-row"><input type="checkbox" id="pd-show-grid" checked onchange="drawPoincare()"> Show hyperbolic grid</label>
+        <label class="checkbox-row"><input type="checkbox" id="pd-show-angles" checked onchange="drawPoincare()"> Show conformal angles</label>
+        <button class="btn" onclick="clearPoincare()" style="margin-top:8px;">Clear Points</button>
+      </div>
+      <div class="card" id="pd-measurements">
+        <h2>Measurements</h2>
+        <div id="pd-distance-info">
+          <p class="info-text">Place two points to measure the hyperbolic distance.</p>
+          <p class="info-text"><span class="formula">d(P,Q) = 2 arctanh|(P-Q)/(1-P*conj(Q))|</span></p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Legend</h2>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Placed points</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--amber)"></div> Geodesic (circular arc)</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--purple)"></div> Parallel geodesics</div>
+        <div class="legend-item"><div class="legend-line" style="background:rgba(255,255,255,0.15)"></div> Hyperbolic grid lines</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 2: Tilings -->
+<div class="tab-content" id="tab-tiling">
+  <div class="main-container">
+    <div class="canvas-area">
+      <canvas id="canvas-tiling"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="card">
+        <h2>Hyperbolic Tilings {p,q}</h2>
+        <p class="info-text">Regular tilings of the hyperbolic plane. Condition: <span class="formula">(p-2)(q-2) > 4</span></p>
+        <div class="control-group">
+          <label>Tiling type</label>
+          <select id="tiling-select" onchange="generateTiling()">
+            <option value="3,7">{3,7} - Triangles, 7 per vertex</option>
+            <option value="4,5">{4,5} - Squares, 5 per vertex</option>
+            <option value="5,4">{5,4} - Pentagons, 4 per vertex</option>
+            <option value="7,3">{7,3} - Heptagons, 3 per vertex</option>
+            <option value="3,8">{3,8} - Triangles, 8 per vertex</option>
+            <option value="6,4">{6,4} - Hexagons, 4 per vertex</option>
+            <option value="4,6">{4,6} - Squares, 6 per vertex</option>
+            <option value="8,3">{8,3} - Octagons, 3 per vertex</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Recursion depth</label>
+          <select id="tiling-depth" onchange="generateTiling()">
+            <option value="2">2 (fast)</option>
+            <option value="3" selected>3</option>
+            <option value="4">4 (detailed)</option>
+            <option value="5">5 (slow)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Color scheme</label>
+          <select id="tiling-color" onchange="drawTiling()">
+            <option value="depth">By generation depth</option>
+            <option value="alternating">Alternating</option>
+            <option value="rainbow">Rainbow</option>
+            <option value="monochrome">Monochrome</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Tiling Info</h2>
+        <div id="tiling-info" class="info-text">
+          <p>Select a tiling to see details.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 3: Upper Half-Plane -->
+<div class="tab-content" id="tab-halfplane">
+  <div class="main-container">
+    <div class="canvas-area">
+      <canvas id="canvas-halfplane"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="card">
+        <h2>Upper Half-Plane Model</h2>
+        <p class="info-text">Geodesics are vertical lines and semicircles orthogonal to the real axis. Click to place points.</p>
+        <div class="btn-row">
+          <button class="btn active" id="hp-mode-geodesic" onclick="setHPMode('geodesic')">Draw Geodesic</button>
+          <button class="btn" id="hp-mode-horocycle" onclick="setHPMode('horocycle')">Horocycles</button>
+          <button class="btn" id="hp-mode-equidistant" onclick="setHPMode('equidistant')">Equidistant</button>
+        </div>
+        <label class="checkbox-row"><input type="checkbox" id="hp-show-grid" checked onchange="drawHalfPlane()"> Show coordinate grid</label>
+        <label class="checkbox-row"><input type="checkbox" id="hp-show-cayley" onchange="drawHalfPlane()"> Show Cayley transform mapping</label>
+        <button class="btn" onclick="clearHalfPlane()" style="margin-top:8px;">Clear Points</button>
+      </div>
+      <div class="card" id="hp-measurements">
+        <h2>Measurements</h2>
+        <div id="hp-distance-info">
+          <p class="info-text">Place two points to measure.</p>
+          <p class="info-text"><span class="formula">ds^2 = (dx^2+dy^2)/y^2</span></p>
+          <p class="info-text">Cayley transform: <span class="formula">w = (z-i)/(z+i)</span> maps H to D.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 4: Isometry Explorer -->
+<div class="tab-content" id="tab-isometry">
+  <div class="main-container">
+    <div class="canvas-area">
+      <canvas id="canvas-isometry"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="card">
+        <h2>Isometry Explorer</h2>
+        <p class="info-text">Apply Mobius transformations to the Poincare disk. Watch how figures transform under hyperbolic isometries.</p>
+        <div class="control-group">
+          <label>Show figure</label>
+          <select id="iso-figure" onchange="drawIsometry()">
+            <option value="triangle">Triangle</option>
+            <option value="square">Square</option>
+            <option value="grid">Hyperbolic grid</option>
+            <option value="circle">Circle pack</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Transformations</h2>
+        <div class="slider-row">
+          <label>Translation X</label>
+          <input type="range" id="iso-tx" min="-0.9" max="0.9" step="0.01" value="0" oninput="drawIsometry()">
+          <span class="slider-val" id="iso-tx-val">0.00</span>
+        </div>
+        <div class="slider-row">
+          <label>Translation Y</label>
+          <input type="range" id="iso-ty" min="-0.9" max="0.9" step="0.01" value="0" oninput="drawIsometry()">
+          <span class="slider-val" id="iso-ty-val">0.00</span>
+        </div>
+        <div class="slider-row">
+          <label>Rotation</label>
+          <input type="range" id="iso-rot" min="0" max="6.2832" step="0.01" value="0" oninput="drawIsometry()">
+          <span class="slider-val" id="iso-rot-val">0.00</span>
+        </div>
+        <div class="slider-row">
+          <label>Parabolic</label>
+          <input type="range" id="iso-para" min="-3" max="3" step="0.05" value="0" oninput="drawIsometry()">
+          <span class="slider-val" id="iso-para-val">0.00</span>
+        </div>
+        <button class="btn" onclick="resetIsometry()" style="margin-top:8px;">Reset</button>
+      </div>
+      <div class="card">
+        <h2>SU(1,1) Matrix</h2>
+        <div id="iso-matrix" class="matrix-display">Loading...</div>
+        <p class="info-text" style="margin-top:8px;">Mobius transformation: <span class="formula">z -> (az+b)/(conj(b)z+conj(a))</span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 5: Triangle -->
+<div class="tab-content" id="tab-triangle">
+  <div class="main-container">
+    <div class="canvas-area">
+      <canvas id="canvas-triangle"></canvas>
+    </div>
+    <div class="side-panel">
+      <div class="card">
+        <h2>Hyperbolic Triangle</h2>
+        <p class="info-text">Drag the three vertices to reshape the triangle. In hyperbolic geometry, the angle sum is always less than pi, and the deficit equals the area.</p>
+        <label class="checkbox-row"><input type="checkbox" id="tri-show-euclidean" checked onchange="drawTriangle()"> Show Euclidean comparison</label>
+        <label class="checkbox-row"><input type="checkbox" id="tri-show-arcs" checked onchange="drawTriangle()"> Show angle arcs</label>
+      </div>
+      <div class="card">
+        <h2>Measurements</h2>
+        <div id="tri-measurements">
+          <div class="measurement">
+            <div class="label">Angles</div>
+            <div class="value" id="tri-angles">-</div>
+          </div>
+          <div class="measurement">
+            <div class="label">Angle sum</div>
+            <div class="value" id="tri-angle-sum">-</div>
+          </div>
+          <div class="measurement">
+            <div class="label">Angular defect</div>
+            <div class="value" id="tri-defect">-</div>
+          </div>
+          <div class="measurement">
+            <div class="label">Hyperbolic area = pi - (alpha+beta+gamma)</div>
+            <div class="value" id="tri-area">-</div>
+          </div>
+          <div class="measurement">
+            <div class="label">Side lengths (hyperbolic)</div>
+            <div class="value" id="tri-sides">-</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Comparison</h2>
+        <div id="tri-comparison" class="info-text">
+          <p>Euclidean triangle: angle sum = <span class="val">pi</span></p>
+          <p>Hyperbolic triangle: angle sum < <span class="val">pi</span></p>
+          <p>Spherical triangle: angle sum > <span class="val">pi</span></p>
+          <p style="margin-top:6px;">The angular defect pi - sum equals the hyperbolic area (Gauss-Bonnet theorem).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== GLOBAL STATE =====================
+let activeTab = 'poincare';
+const PI = Math.PI;
+const TWO_PI = 2 * PI;
+
+// ===================== TAB MANAGEMENT =====================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('tab-' + tab).classList.add('active');
+    activeTab = tab;
+    requestAnimationFrame(() => {
+      if (tab === 'poincare') { resizeCanvas('canvas-poincare'); drawPoincare(); }
+      else if (tab === 'tiling') { resizeCanvas('canvas-tiling'); generateTiling(); }
+      else if (tab === 'halfplane') { resizeCanvas('canvas-halfplane'); drawHalfPlane(); }
+      else if (tab === 'isometry') { resizeCanvas('canvas-isometry'); drawIsometry(); }
+      else if (tab === 'triangle') { resizeCanvas('canvas-triangle'); drawTriangle(); }
+    });
+  });
+});
+
+function resizeCanvas(id) {
+  const canvas = document.getElementById(id);
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const size = Math.min(rect.width, window.innerHeight - 180);
+  canvas.width = size * window.devicePixelRatio;
+  canvas.height = size * window.devicePixelRatio;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+}
+
+function getCanvasCenter(canvas) {
+  return { x: canvas.width / 2, y: canvas.height / 2, r: canvas.width * 0.42 };
+}
+
+function canvasToHyp(canvas, px, py) {
+  const c = getCanvasCenter(canvas);
+  return { x: (px * window.devicePixelRatio - c.x) / c.r, y: (py * window.devicePixelRatio - c.y) / c.r };
+}
+
+function hypToCanvas(canvas, hx, hy) {
+  const c = getCanvasCenter(canvas);
+  return { x: c.x + hx * c.r, y: c.y + hy * c.r };
+}
+
+// ===================== COMPLEX ARITHMETIC =====================
+function cAdd(a, b) { return [a[0]+b[0], a[1]+b[1]]; }
+function cSub(a, b) { return [a[0]-b[0], a[1]-b[1]]; }
+function cMul(a, b) { return [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]]; }
+function cDiv(a, b) {
+  const d = b[0]*b[0]+b[1]*b[1];
+  if (d < 1e-20) return [0,0];
+  return [(a[0]*b[0]+a[1]*b[1])/d, (a[1]*b[0]-a[0]*b[1])/d];
+}
+function cConj(a) { return [a[0], -a[1]]; }
+function cAbs(a) { return Math.sqrt(a[0]*a[0]+a[1]*a[1]); }
+function cScale(a, s) { return [a[0]*s, a[1]*s]; }
+function cExp(a) { const r = Math.exp(a[0]); return [r*Math.cos(a[1]), r*Math.sin(a[1])]; }
+function cNorm2(a) { return a[0]*a[0]+a[1]*a[1]; }
+
+// Mobius transformation: (a*z+b)/(c*z+d)
+function mobius(z, a, b, c, d) {
+  return cDiv(cAdd(cMul(a,z),b), cAdd(cMul(c,z),d));
+}
+
+// SU(1,1) Mobius: z -> (a*z+b)/(conj(b)*z+conj(a))
+function mobiusSU11(z, a, b) {
+  return cDiv(cAdd(cMul(a,z),b), cAdd(cMul(cConj(b),z),cConj(a)));
+}
+
+// Hyperbolic distance in Poincare disk
+function hypDist(p, q) {
+  const pz = [p.x, p.y], qz = [q.x, q.y];
+  const diff = cSub(pz, qz);
+  const prod = cSub([1,0], cMul(pz, cConj(qz)));
+  const ratio = cAbs(diff) / cAbs(prod);
+  return 2 * Math.atanh(Math.min(ratio, 0.9999));
+}
+
+// ===================== DRAWING HELPERS =====================
+function drawDiskBoundary(ctx, canvas) {
+  const c = getCanvasCenter(canvas);
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, c.r, 0, TWO_PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Subtle fill
+  const grad = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+  grad.addColorStop(0, 'rgba(20,20,40,0.3)');
+  grad.addColorStop(1, 'rgba(10,10,20,0.8)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+// Compute the geodesic (circular arc) between two points in the Poincare disk
+// Returns {cx, cy, radius, startAngle, endAngle} for an arc or {isLine: true, ...} for a diameter
+function geodesicArc(p, q) {
+  const px = p.x, py = p.y, qx = q.x, qy = q.y;
+  // Check if points are (nearly) on a diameter through origin
+  const cross = px * qy - py * qx;
+  if (Math.abs(cross) < 1e-6) {
+    return { isLine: true, p, q };
+  }
+  // The geodesic is the unique circle through p and q orthogonal to the unit circle.
+  // The center (cx,cy) satisfies: cx*px+cy*py = (1+px^2+py^2)/2 and same for q
+  const d1 = (1 + px*px + py*py) / 2;
+  const d2 = (1 + qx*qx + qy*qy) / 2;
+  const det = px*qy - py*qx;
+  const cx = (d1*qy - d2*py) / det;
+  const cy = (px*d2 - qx*d1) / det;
+  const radius = Math.sqrt((px-cx)*(px-cx) + (py-cy)*(py-cy));
+  const a1 = Math.atan2(py-cy, px-cx);
+  const a2 = Math.atan2(qy-cy, qx-cx);
+  return { isLine: false, cx, cy, radius, a1, a2 };
+}
+
+function drawGeodesicOnCanvas(ctx, canvas, p, q, color, lineWidth) {
+  const c = getCanvasCenter(canvas);
+  const arc = geodesicArc(p, q);
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  if (arc.isLine) {
+    // Extend to boundary
+    const len = Math.sqrt(p.x*p.x + p.y*p.y);
+    let dx, dy;
+    if (len > 1e-6) { dx = p.x/len; dy = p.y/len; }
+    else { const l2 = Math.sqrt(q.x*q.x+q.y*q.y); dx = q.x/l2; dy = q.y/l2; }
+    const p1 = hypToCanvas(canvas, dx, dy);
+    const p2 = hypToCanvas(canvas, -dx, -dy);
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+  } else {
+    // Draw arc, but clip to unit disk
+    let a1 = arc.a1, a2 = arc.a2;
+    // Choose the shorter arc that stays inside disk
+    let diff = a2 - a1;
+    while (diff > PI) diff -= TWO_PI;
+    while (diff < -PI) diff += TWO_PI;
+    // Check midpoint
+    const midA = a1 + diff / 2;
+    const mx = arc.cx + arc.radius * Math.cos(midA);
+    const my = arc.cy + arc.radius * Math.sin(midA);
+    const midR = Math.sqrt(mx*mx + my*my);
+    if (midR > 1.01) {
+      // Wrong arc direction
+      diff = diff > 0 ? diff - TWO_PI : diff + TWO_PI;
+    }
+    const ccx = c.x + arc.cx * c.r;
+    const ccy = c.y + arc.cy * c.r;
+    const cr = arc.radius * c.r;
+    ctx.arc(ccx, ccy, cr, a1, a1 + diff, diff < 0);
+  }
+  ctx.stroke();
+}
+
+// Draw a full geodesic line (extended to the boundary)
+function drawFullGeodesic(ctx, canvas, p, q, color, lineWidth) {
+  const c = getCanvasCenter(canvas);
+  const arc = geodesicArc(p, q);
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  if (arc.isLine) {
+    const len = Math.sqrt(p.x*p.x + p.y*p.y + q.x*q.x + q.y*q.y);
+    let dx = q.x - p.x, dy = q.y - p.y;
+    const l = Math.sqrt(dx*dx+dy*dy);
+    if (l < 1e-10) return;
+    dx /= l; dy /= l;
+    const p1 = hypToCanvas(canvas, dx * 0.999, dy * 0.999);
+    const p2 = hypToCanvas(canvas, -dx * 0.999, -dy * 0.999);
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+  } else {
+    // Find intersection with unit circle
+    const d = Math.sqrt(arc.cx*arc.cx + arc.cy*arc.cy);
+    if (d < 1e-10) return;
+    // Angle from center of geodesic circle to center of unit disk origin
+    const phi = Math.atan2(-arc.cy, -arc.cx);
+    const cosA = (arc.radius*arc.radius + d*d - 1) / (2*arc.radius*d);
+    const clampedCos = Math.max(-1, Math.min(1, cosA));
+    const alpha = Math.acos(clampedCos);
+    const ia1 = phi - alpha;
+    const ia2 = phi + alpha;
+    const ccx = c.x + arc.cx * c.r;
+    const ccy = c.y + arc.cy * c.r;
+    const cr = arc.radius * c.r;
+    // Determine direction
+    let diff = ia2 - ia1;
+    while (diff > PI) diff -= TWO_PI;
+    while (diff < -PI) diff += TWO_PI;
+    const midA = ia1 + diff / 2;
+    const mx = arc.cx + arc.radius * Math.cos(midA);
+    const my = arc.cy + arc.radius * Math.sin(midA);
+    if (mx*mx + my*my > 1.01) {
+      diff = diff > 0 ? diff - TWO_PI : diff + TWO_PI;
+    }
+    ctx.arc(ccx, ccy, cr, ia1, ia1 + diff, diff < 0);
+  }
+  ctx.stroke();
+}
+
+function drawPoint(ctx, canvas, p, color, radius) {
+  const cp = hypToCanvas(canvas, p.x, p.y);
+  ctx.beginPath();
+  ctx.arc(cp.x, cp.y, radius || 6, 0, TWO_PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// ===================== TAB 1: POINCARE DISK =====================
+let pdPoints = [];
+let pdMode = 'geodesic'; // 'geodesic' or 'parallel'
+
+function setPDMode(mode) {
+  pdMode = mode;
+  document.getElementById('pd-mode-geodesic').classList.toggle('active', mode === 'geodesic');
+  document.getElementById('pd-mode-parallel').classList.toggle('active', mode === 'parallel');
+  drawPoincare();
+}
+
+function clearPoincare() {
+  pdPoints = [];
+  drawPoincare();
+}
+
+function drawPoincareGrid(ctx, canvas) {
+  const c = getCanvasCenter(canvas);
+  // Draw concentric hyperbolic circles (equidistant from origin)
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1;
+  for (let d = 0.5; d <= 3.0; d += 0.5) {
+    const r = Math.tanh(d / 2); // Euclidean radius for hyperbolic distance d from origin
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, r * c.r, 0, TWO_PI);
+    ctx.stroke();
+  }
+  // Draw radial geodesics
+  for (let i = 0; i < 12; i++) {
+    const angle = i * PI / 6;
+    const ex = 0.999 * Math.cos(angle);
+    const ey = 0.999 * Math.sin(angle);
+    const p1 = hypToCanvas(canvas, ex, ey);
+    const p2 = hypToCanvas(canvas, -ex, -ey);
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  }
+}
+
+function drawPoincare() {
+  const canvas = document.getElementById('canvas-poincare');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawDiskBoundary(ctx, canvas);
+  if (document.getElementById('pd-show-grid').checked) {
+    drawPoincareGrid(ctx, canvas);
+  }
+  // Draw geodesics
+  if (pdMode === 'geodesic') {
+    for (let i = 0; i + 1 < pdPoints.length; i += 2) {
+      drawFullGeodesic(ctx, canvas, pdPoints[i], pdPoints[i+1], 'rgba(245,158,11,0.85)', 2.5);
+      // Show distance
+      const d = hypDist(pdPoints[i], pdPoints[i+1]);
+      const mp = { x: (pdPoints[i].x + pdPoints[i+1].x)/2, y: (pdPoints[i].y + pdPoints[i+1].y)/2 };
+      const cp = hypToCanvas(canvas, mp.x, mp.y);
+      ctx.font = `${14 * window.devicePixelRatio}px 'JetBrains Mono', monospace`;
+      ctx.fillStyle = 'rgba(245,158,11,0.9)';
+      ctx.fillText('d=' + d.toFixed(3), cp.x + 10, cp.y - 10);
+    }
+    // Show conformal angle demonstration
+    if (document.getElementById('pd-show-angles').checked && pdPoints.length >= 4) {
+      drawConformalAngle(ctx, canvas, pdPoints);
+    }
+  } else if (pdMode === 'parallel') {
+    if (pdPoints.length >= 2) {
+      // Draw the base geodesic through first two points
+      drawFullGeodesic(ctx, canvas, pdPoints[0], pdPoints[1], 'rgba(245,158,11,0.85)', 2.5);
+      // If there's a third point, draw multiple parallel lines through it
+      if (pdPoints.length >= 3) {
+        const p = pdPoints[2];
+        for (let i = -3; i <= 3; i++) {
+          if (i === 0) continue;
+          const angle = Math.atan2(p.y, p.x) + i * 0.25;
+          const r = Math.sqrt(p.x*p.x + p.y*p.y);
+          const q = {
+            x: p.x + 0.3 * Math.cos(angle + PI/2),
+            y: p.y + 0.3 * Math.sin(angle + PI/2)
+          };
+          const qn = Math.sqrt(q.x*q.x + q.y*q.y);
+          if (qn >= 0.99) { q.x *= 0.95/qn; q.y *= 0.95/qn; }
+          // Check this line doesn't intersect the base geodesic
+          drawFullGeodesic(ctx, canvas, p, q, `rgba(167,139,250,${0.4 + 0.1*Math.abs(i)})`, 1.5);
+        }
+        drawPoint(ctx, canvas, pdPoints[2], '#a78bfa', 7);
+      }
+    }
+  }
+  // Draw points
+  pdPoints.forEach((p, i) => {
+    const color = (pdMode === 'parallel' && i === 2) ? '#a78bfa' : '#2dd4bf';
+    drawPoint(ctx, canvas, p, color, 7);
+  });
+  updatePDMeasurements();
+}
+
+function drawConformalAngle(ctx, canvas, pts) {
+  if (pts.length < 4) return;
+  // Find intersection of first two geodesics if they intersect
+  // For simplicity, show angle arcs at points
+  const c = getCanvasCenter(canvas);
+  // Angle at the intersection of the geodesic and a radial line through the first point
+  if (pts.length >= 2) {
+    const p = pts[0];
+    const cp = hypToCanvas(canvas, p.x, p.y);
+    // Tangent angle of geodesic at p
+    const arc = geodesicArc(pts[0], pts[1]);
+    if (!arc.isLine) {
+      const tAngle = Math.atan2(p.y - arc.cy, p.x - arc.cx) + PI/2;
+      const radAngle = Math.atan2(p.y, p.x);
+      const a = Math.abs(tAngle - radAngle);
+      ctx.beginPath();
+      ctx.arc(cp.x, cp.y, 25 * window.devicePixelRatio, Math.min(tAngle, radAngle), Math.max(tAngle, radAngle));
+      ctx.strokeStyle = 'rgba(96,165,250,0.6)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.font = `${11 * window.devicePixelRatio}px 'JetBrains Mono', monospace`;
+      ctx.fillStyle = 'rgba(96,165,250,0.8)';
+      ctx.fillText((a * 180 / PI).toFixed(1) + '\u00B0', cp.x + 30, cp.y - 20);
+    }
+  }
+}
+
+function updatePDMeasurements() {
+  const el = document.getElementById('pd-distance-info');
+  if (pdMode === 'geodesic' && pdPoints.length >= 2) {
+    const last = pdPoints.length - (pdPoints.length % 2 === 0 ? 2 : 1);
+    if (last >= 0 && last + 1 < pdPoints.length + 1 && pdPoints.length >= 2) {
+      const i = pdPoints.length >= 2 ? pdPoints.length - 2 : 0;
+      if (i + 1 < pdPoints.length) {
+        const d = hypDist(pdPoints[i], pdPoints[i+1]);
+        const p = pdPoints[i], q = pdPoints[i+1];
+        el.innerHTML = `
+          <div class="measurement"><div class="label">Point P</div><div class="value">(${p.x.toFixed(3)}, ${p.y.toFixed(3)})</div></div>
+          <div class="measurement"><div class="label">Point Q</div><div class="value">(${q.x.toFixed(3)}, ${q.y.toFixed(3)})</div></div>
+          <div class="measurement"><div class="label">Hyperbolic distance</div><div class="value">${d.toFixed(5)}</div></div>
+          <p class="info-text"><span class="formula">d = 2 arctanh|P-Q|/|1-P*conj(Q)|</span></p>
+          <p class="info-text">|P| = <span class="val">${Math.sqrt(p.x*p.x+p.y*p.y).toFixed(4)}</span>, |Q| = <span class="val">${Math.sqrt(q.x*q.x+q.y*q.y).toFixed(4)}</span></p>
+        `;
+        return;
+      }
+    }
+  }
+  el.innerHTML = `
+    <p class="info-text">Place two points to measure the hyperbolic distance.</p>
+    <p class="info-text"><span class="formula">d(P,Q) = 2 arctanh|(P-Q)/(1-P*conj(Q))|</span></p>
+  `;
+}
+
+document.getElementById('canvas-poincare').addEventListener('click', function(e) {
+  if (activeTab !== 'poincare') return;
+  const rect = this.getBoundingClientRect();
+  const p = canvasToHyp(this, e.clientX - rect.left, e.clientY - rect.top);
+  if (p.x*p.x + p.y*p.y < 0.98) {
+    pdPoints.push(p);
+    drawPoincare();
+  }
+});
+
+// ===================== TAB 2: HYPERBOLIC TILINGS =====================
+let tilingPolygons = [];
+
+function generateTiling() {
+  const sel = document.getElementById('tiling-select').value.split(',');
+  const p = parseInt(sel[0]), q = parseInt(sel[1]);
+  const depth = parseInt(document.getElementById('tiling-depth').value);
+
+  // Calculate the edge length and inradius of the {p,q} tile
+  const cosPiP = Math.cos(PI/p);
+  const cosPiQ = Math.cos(PI/q);
+  const sinPiP = Math.sin(PI/p);
+  const sinPiQ = Math.sin(PI/q);
+
+  // Hyperbolic edge length via cosh(a/2) = cos(pi/q)*sin(pi/p) / sin(angular stuff)
+  // Distance from center to vertex
+  const cosA = cosPiP * cosPiQ / (sinPiP * sinPiQ);
+  const coshA = Math.max(1.0001, cosA / Math.sqrt(Math.max(0.0001, cosA*cosA - 1)) * cosA);
+  // Use the formula: cosh(d) = cos(pi/p)cos(pi/q) + cos(pi/p) ...
+  // Simpler: the Euclidean radius of the vertex in Poincare disk:
+  // r = tanh(d/2) where cosh(d) = cos(pi/q)/sin(pi/p)
+  const coshDist = cosPiQ / sinPiP;
+  const dist = Math.acosh(Math.max(1.0001, coshDist));
+  const vertexR = Math.tanh(dist / 2);
+
+  // Generate the central polygon
+  const centerPoly = [];
+  for (let i = 0; i < p; i++) {
+    const angle = TWO_PI * i / p - PI/2;
+    centerPoly.push([vertexR * Math.cos(angle), vertexR * Math.sin(angle)]);
+  }
+
+  tilingPolygons = [];
+  const visited = new Set();
+
+  function polyKey(poly) {
+    const cx = poly.reduce((s, v) => s + v[0], 0) / poly.length;
+    const cy = poly.reduce((s, v) => s + v[1], 0) / poly.length;
+    return Math.round(cx * 1000) + ',' + Math.round(cy * 1000);
+  }
+
+  function reflectAcrossGeodesic(point, p1, p2) {
+    // Reflect point across the geodesic through p1 and p2 using Mobius inversion
+    const z = point;
+    const a = [p1[0], p1[1]], b = [p2[0], p2[1]];
+    // The geodesic through a,b in Poincare disk: reflect via the circle orthogonal to unit disk
+    const cross = a[0]*b[1] - a[1]*b[0];
+    if (Math.abs(cross) < 1e-8) {
+      // Line through origin: simple reflection
+      const dx = b[0]-a[0], dy = b[1]-a[1];
+      const len = Math.sqrt(dx*dx+dy*dy);
+      const nx = dx/len, ny = dy/len;
+      const dot = z[0]*nx + z[1]*ny;
+      return [2*dot*nx - z[0], 2*dot*ny - z[1]];
+    }
+    // Center of geodesic circle
+    const d1 = (1 + a[0]*a[0]+a[1]*a[1])/2;
+    const d2 = (1 + b[0]*b[0]+b[1]*b[1])/2;
+    const det = a[0]*b[1] - a[1]*b[0];
+    const cx = (d1*b[1] - d2*a[1]) / det;
+    const cy = (a[0]*d2 - b[0]*d1) / det;
+    const r2 = (a[0]-cx)*(a[0]-cx) + (a[1]-cy)*(a[1]-cy);
+    // Inversion in circle (cx,cy,r)
+    const dx = z[0]-cx, dy = z[1]-cy;
+    const d2p = dx*dx+dy*dy;
+    if (d2p < 1e-15) return z;
+    return [cx + r2*dx/d2p, cy + r2*dy/d2p];
+  }
+
+  function addPoly(poly, gen) {
+    const key = polyKey(poly);
+    if (visited.has(key)) return;
+    // Check if the polygon center is inside the unit disk
+    const cx = poly.reduce((s, v) => s + v[0], 0) / poly.length;
+    const cy = poly.reduce((s, v) => s + v[1], 0) / poly.length;
+    if (cx*cx + cy*cy > 0.999) return;
+    visited.add(key);
+    tilingPolygons.push({ vertices: poly, gen });
+    if (gen >= depth) return;
+    // Reflect across each edge
+    for (let i = 0; i < poly.length; i++) {
+      const j = (i + 1) % poly.length;
+      const newPoly = poly.map(v => reflectAcrossGeodesic(v, poly[i], poly[j]));
+      // Check validity
+      const ncx = newPoly.reduce((s, v) => s + v[0], 0) / newPoly.length;
+      const ncy = newPoly.reduce((s, v) => s + v[1], 0) / newPoly.length;
+      if (ncx*ncx + ncy*ncy < 0.998) {
+        addPoly(newPoly, gen + 1);
+      }
+    }
+  }
+
+  addPoly(centerPoly, 0);
+
+  // Update info
+  document.getElementById('tiling-info').innerHTML = `
+    <p>Tiling: <span class="val">{${p},${q}}</span></p>
+    <p>Polygons per vertex: <span class="val">${q}</span></p>
+    <p>Polygon sides: <span class="val">${p}</span></p>
+    <p>Tiles generated: <span class="val">${tilingPolygons.length}</span></p>
+    <p>Vertex radius: <span class="val">${vertexR.toFixed(4)}</span></p>
+    <p style="margin-top:6px;"><span class="formula">(${p}-2)(${q}-2) = ${(p-2)*(q-2)} > 4</span></p>
+  `;
+  drawTiling();
+}
+
+function drawTiling() {
+  const canvas = document.getElementById('canvas-tiling');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawDiskBoundary(ctx, canvas);
+  const c = getCanvasCenter(canvas);
+  const colorScheme = document.getElementById('tiling-color').value;
+  const maxGen = tilingPolygons.reduce((m, p) => Math.max(m, p.gen), 0);
+  const depthColors = [
+    'rgba(45,212,191,0.6)', 'rgba(245,158,11,0.5)', 'rgba(167,139,250,0.5)',
+    'rgba(251,113,133,0.4)', 'rgba(96,165,250,0.4)', 'rgba(52,211,153,0.35)'
+  ];
+  const rainbowColors = (i, n) => {
+    const h = (i / Math.max(1, n)) * 360;
+    return `hsla(${h}, 70%, 55%, 0.5)`;
+  };
+
+  // Save context and clip to disk
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, c.r - 1, 0, TWO_PI);
+  ctx.clip();
+
+  tilingPolygons.forEach((poly, idx) => {
+    const verts = poly.vertices.map(v => hypToCanvas(canvas, v[0], v[1]));
+    ctx.beginPath();
+    ctx.moveTo(verts[0].x, verts[0].y);
+    // Draw edges as geodesic arcs
+    for (let i = 0; i < verts.length; i++) {
+      const j = (i + 1) % verts.length;
+      const pi = poly.vertices[i], pj = poly.vertices[j];
+      const arc = geodesicArc({x:pi[0],y:pi[1]}, {x:pj[0],y:pj[1]});
+      if (arc.isLine) {
+        ctx.lineTo(verts[j].x, verts[j].y);
+      } else {
+        let a1 = arc.a1, a2 = arc.a2;
+        let diff = a2 - a1;
+        while (diff > PI) diff -= TWO_PI;
+        while (diff < -PI) diff += TWO_PI;
+        const midA = a1 + diff / 2;
+        const mx = arc.cx + arc.radius * Math.cos(midA);
+        const my = arc.cy + arc.radius * Math.sin(midA);
+        if (mx*mx + my*my > 1.01) diff = diff > 0 ? diff - TWO_PI : diff + TWO_PI;
+        const ccx = c.x + arc.cx * c.r;
+        const ccy = c.y + arc.cy * c.r;
+        const cr = arc.radius * c.r;
+        ctx.arc(ccx, ccy, cr, a1, a1 + diff, diff < 0);
+      }
+    }
+    ctx.closePath();
+    let fillColor;
+    if (colorScheme === 'depth') fillColor = depthColors[poly.gen % depthColors.length];
+    else if (colorScheme === 'alternating') fillColor = idx % 2 === 0 ? 'rgba(45,212,191,0.4)' : 'rgba(167,139,250,0.35)';
+    else if (colorScheme === 'rainbow') fillColor = rainbowColors(idx, tilingPolygons.length);
+    else fillColor = `rgba(45,212,191,${0.15 + 0.3 * (1 - poly.gen / Math.max(1, maxGen))})`;
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// ===================== TAB 3: UPPER HALF-PLANE =====================
+let hpPoints = [];
+let hpMode = 'geodesic';
+
+function setHPMode(mode) {
+  hpMode = mode;
+  document.getElementById('hp-mode-geodesic').classList.toggle('active', mode === 'geodesic');
+  document.getElementById('hp-mode-horocycle').classList.toggle('active', mode === 'horocycle');
+  document.getElementById('hp-mode-equidistant').classList.toggle('active', mode === 'equidistant');
+  drawHalfPlane();
+}
+
+function clearHalfPlane() {
+  hpPoints = [];
+  drawHalfPlane();
+}
+
+function hpToCanvas(canvas, x, y) {
+  // Map upper half-plane region [-5,5] x [0,6] to canvas
+  const w = canvas.width, h = canvas.height;
+  const margin = 40 * window.devicePixelRatio;
+  const sx = margin + (x + 5) / 10 * (w - 2*margin);
+  const sy = h - margin - y / 6 * (h - 2*margin);
+  return { x: sx, y: sy };
+}
+
+function canvasToHP(canvas, px, py) {
+  const w = canvas.width, h = canvas.height;
+  const margin = 40 * window.devicePixelRatio;
+  const x = (px * window.devicePixelRatio - margin) / (w - 2*margin) * 10 - 5;
+  const y = (h - margin - py * window.devicePixelRatio) / (h - 2*margin) * 6;
+  return { x, y };
+}
+
+function hpHypDist(p1, p2) {
+  // d = arcosh(1 + |z1-z2|^2 / (2*y1*y2))
+  const dx = p1.x - p2.x, dy = p1.y - p2.y;
+  const num = dx*dx + dy*dy;
+  const denom = 2 * p1.y * p2.y;
+  if (denom < 1e-10) return Infinity;
+  return Math.acosh(Math.max(1, 1 + num / denom));
+}
+
+function drawHalfPlane() {
+  const canvas = document.getElementById('canvas-halfplane');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const w = canvas.width, h = canvas.height;
+  const margin = 40 * window.devicePixelRatio;
+
+  // Background
+  const grad = ctx.createLinearGradient(0, margin, 0, h - margin);
+  grad.addColorStop(0, 'rgba(20,20,40,0.8)');
+  grad.addColorStop(1, 'rgba(10,10,20,0.95)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(margin, margin, w - 2*margin, h - 2*margin);
+
+  // Border
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(margin, margin, w - 2*margin, h - 2*margin);
+
+  // Real axis (boundary)
+  const axisY = hpToCanvas(canvas, 0, 0).y;
+  ctx.beginPath();
+  ctx.moveTo(margin, axisY);
+  ctx.lineTo(w - margin, axisY);
+  ctx.strokeStyle = 'rgba(251,113,133,0.6)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.font = `${11 * window.devicePixelRatio}px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = 'rgba(251,113,133,0.7)';
+  ctx.fillText('Real axis (boundary at infinity)', margin + 5, axisY + 16 * window.devicePixelRatio);
+
+  // Grid
+  if (document.getElementById('hp-show-grid').checked) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let x = -4; x <= 4; x++) {
+      const p = hpToCanvas(canvas, x, 0);
+      const p2 = hpToCanvas(canvas, x, 6);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillText(x.toString(), p.x - 4, p.y + 14 * window.devicePixelRatio);
+    }
+    for (let y = 1; y <= 5; y++) {
+      const p = hpToCanvas(canvas, -5, y);
+      const p2 = hpToCanvas(canvas, 5, y);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillText(y.toString(), margin + 4, p.y + 4);
+    }
+  }
+
+  // Draw geodesics and features
+  if (hpMode === 'geodesic' && hpPoints.length >= 2) {
+    for (let i = 0; i + 1 < hpPoints.length; i += 2) {
+      drawHPGeodesic(ctx, canvas, hpPoints[i], hpPoints[i+1]);
+    }
+  } else if (hpMode === 'horocycle' && hpPoints.length >= 1) {
+    // Draw horocycles: circles tangent to real axis
+    hpPoints.forEach(p => {
+      for (let r = 0.3; r <= 2; r += 0.4) {
+        const cy = p.y;
+        // Horocycle through p with various radii
+        ctx.beginPath();
+        const steps = 100;
+        for (let s = 0; s <= steps; s++) {
+          const t = -5 + 10 * s / steps;
+          const hy = r; // horocycle at height r
+          const cp = hpToCanvas(canvas, t, hy);
+          if (cp.y > axisY || cp.y < margin) continue;
+          if (s === 0) ctx.moveTo(cp.x, cp.y);
+          else ctx.lineTo(cp.x, cp.y);
+        }
+        ctx.strokeStyle = `rgba(167,139,250,${0.3 + 0.1 * r})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      // Horocycle tangent to real axis at a point below p
+      const center = hpToCanvas(canvas, p.x, p.y / 2);
+      const radiusPx = Math.abs(hpToCanvas(canvas, 0, p.y).y - hpToCanvas(canvas, 0, 0).y) / 2;
+      ctx.beginPath();
+      ctx.arc(hpToCanvas(canvas, p.x, 0).x, hpToCanvas(canvas, p.x, 0).y, radiusPx, PI, TWO_PI);
+      ctx.strokeStyle = 'rgba(245,158,11,0.7)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  } else if (hpMode === 'equidistant' && hpPoints.length >= 2) {
+    // Draw equidistant curves from the geodesic
+    drawHPGeodesic(ctx, canvas, hpPoints[0], hpPoints[1]);
+    // Equidistant curves
+    for (let d = 0.5; d <= 2; d += 0.5) {
+      drawHPEquidistant(ctx, canvas, hpPoints[0], hpPoints[1], d);
+      drawHPEquidistant(ctx, canvas, hpPoints[0], hpPoints[1], -d);
+    }
+  }
+
+  // Cayley transform visualization
+  if (document.getElementById('hp-show-cayley').checked) {
+    drawCayleyMapping(ctx, canvas);
+  }
+
+  // Draw points
+  hpPoints.forEach(p => {
+    if (p.y <= 0) return;
+    const cp = hpToCanvas(canvas, p.x, p.y);
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, 7, 0, TWO_PI);
+    ctx.fillStyle = '#2dd4bf';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  updateHPMeasurements();
+}
+
+function drawHPGeodesic(ctx, canvas, p1, p2) {
+  const margin = 40 * window.devicePixelRatio;
+  if (Math.abs(p1.x - p2.x) < 0.05) {
+    // Vertical geodesic
+    const cp1 = hpToCanvas(canvas, p1.x, 0);
+    const cp2 = hpToCanvas(canvas, p1.x, 6);
+    ctx.beginPath();
+    ctx.moveTo(cp1.x, cp1.y);
+    ctx.lineTo(cp2.x, cp2.y);
+    ctx.strokeStyle = 'rgba(245,158,11,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  } else {
+    // Semicircle centered on real axis
+    const cx = (p2.x*p2.x + p2.y*p2.y - p1.x*p1.x - p1.y*p1.y) / (2*(p2.x - p1.x));
+    const r = Math.sqrt((p1.x - cx)*(p1.x - cx) + p1.y*p1.y);
+    const ccp = hpToCanvas(canvas, cx, 0);
+    const rPx = r / 10 * (canvas.width - 2*margin);
+    ctx.beginPath();
+    ctx.arc(ccp.x, ccp.y, rPx, PI, 0);
+    ctx.strokeStyle = 'rgba(245,158,11,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+}
+
+function drawHPEquidistant(ctx, canvas, p1, p2, d) {
+  const margin = 40 * window.devicePixelRatio;
+  ctx.beginPath();
+  const steps = 200;
+  let started = false;
+  if (Math.abs(p1.x - p2.x) < 0.05) {
+    // Vertical geodesic - equidistant curves are lines y = c*e^(d*...) -- actually they are Euclidean lines
+    for (let s = 0; s <= steps; s++) {
+      const t = 0.01 + 5.99 * s / steps;
+      // Equidistant at distance d from vertical line x = p1.x
+      const ed = Math.sinh(Math.abs(d));
+      const x = p1.x + ed * t * (d > 0 ? 1 : -1);
+      const y = t;
+      if (x < -5 || x > 5 || y < 0.01) continue;
+      const cp = hpToCanvas(canvas, x, y);
+      if (!started) { ctx.moveTo(cp.x, cp.y); started = true; }
+      else ctx.lineTo(cp.x, cp.y);
+    }
+  } else {
+    const cx = (p2.x*p2.x + p2.y*p2.y - p1.x*p1.x - p1.y*p1.y) / (2*(p2.x - p1.x));
+    const r = Math.sqrt((p1.x - cx)*(p1.x - cx) + p1.y*p1.y);
+    const factor = Math.exp(d);
+    for (let s = 0; s <= steps; s++) {
+      const angle = PI * s / steps;
+      const x = cx + r * factor * Math.cos(angle);
+      const y = r * factor * Math.sin(angle);
+      if (x < -5 || x > 5 || y < 0.01 || y > 6) continue;
+      const cp = hpToCanvas(canvas, x, y);
+      if (!started) { ctx.moveTo(cp.x, cp.y); started = true; }
+      else ctx.lineTo(cp.x, cp.y);
+    }
+  }
+  ctx.strokeStyle = `rgba(167,139,250,0.4)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawCayleyMapping(ctx, canvas) {
+  // Show a small Poincare disk in the corner showing the Cayley transform
+  const size = canvas.width * 0.18;
+  const cx = canvas.width - size - 20 * window.devicePixelRatio;
+  const cy = 20 * window.devicePixelRatio;
+  const r = size * 0.42;
+  const dcx = cx + size/2, dcy = cy + size/2;
+
+  ctx.fillStyle = 'rgba(10,10,20,0.85)';
+  ctx.fillRect(cx, cy, size, size);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx, cy, size, size);
+
+  // Unit disk
+  ctx.beginPath();
+  ctx.arc(dcx, dcy, r, 0, TWO_PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Map HP points via Cayley transform
+  ctx.font = `${9 * window.devicePixelRatio}px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = 'rgba(245,158,11,0.7)';
+  ctx.fillText('Cayley: w=(z-i)/(z+i)', cx + 4, cy + size - 4);
+
+  hpPoints.forEach(p => {
+    // Cayley transform: w = (z-i)/(z+i) where z = x+iy
+    const z = [p.x, p.y];
+    const zi = cSub(z, [0, 1]);
+    const zpi = cAdd(z, [0, 1]);
+    const w = cDiv(zi, zpi);
+    const wpx = dcx + w[0] * r;
+    const wpy = dcy + w[1] * r;
+    ctx.beginPath();
+    ctx.arc(wpx, wpy, 4, 0, TWO_PI);
+    ctx.fillStyle = '#2dd4bf';
+    ctx.fill();
+  });
+}
+
+function updateHPMeasurements() {
+  const el = document.getElementById('hp-distance-info');
+  if (hpPoints.length >= 2) {
+    const p = hpPoints[hpPoints.length - 2], q = hpPoints[hpPoints.length - 1];
+    const d = hpHypDist(p, q);
+    el.innerHTML = `
+      <div class="measurement"><div class="label">Point P</div><div class="value">(${p.x.toFixed(3)}, ${p.y.toFixed(3)})</div></div>
+      <div class="measurement"><div class="label">Point Q</div><div class="value">(${q.x.toFixed(3)}, ${q.y.toFixed(3)})</div></div>
+      <div class="measurement"><div class="label">Hyperbolic distance</div><div class="value">${d.toFixed(5)}</div></div>
+      <p class="info-text"><span class="formula">d = acosh(1+|z1-z2|^2/(2*y1*y2))</span></p>
+    `;
+  } else {
+    el.innerHTML = `
+      <p class="info-text">Place two points to measure.</p>
+      <p class="info-text"><span class="formula">ds^2 = (dx^2+dy^2)/y^2</span></p>
+      <p class="info-text">Cayley transform: <span class="formula">w = (z-i)/(z+i)</span></p>
+    `;
+  }
+}
+
+document.getElementById('canvas-halfplane').addEventListener('click', function(e) {
+  if (activeTab !== 'halfplane') return;
+  const rect = this.getBoundingClientRect();
+  const p = canvasToHP(this, e.clientX - rect.left, e.clientY - rect.top);
+  if (p.y > 0.05 && p.x > -5 && p.x < 5) {
+    hpPoints.push(p);
+    drawHalfPlane();
+  }
+});
+
+// ===================== TAB 4: ISOMETRY EXPLORER =====================
+function drawIsometry() {
+  const canvas = document.getElementById('canvas-isometry');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawDiskBoundary(ctx, canvas);
+  const c = getCanvasCenter(canvas);
+
+  // Read parameters
+  const tx = parseFloat(document.getElementById('iso-tx').value);
+  const ty = parseFloat(document.getElementById('iso-ty').value);
+  const rot = parseFloat(document.getElementById('iso-rot').value);
+  const para = parseFloat(document.getElementById('iso-para').value);
+
+  document.getElementById('iso-tx-val').textContent = tx.toFixed(2);
+  document.getElementById('iso-ty-val').textContent = ty.toFixed(2);
+  document.getElementById('iso-rot-val').textContent = rot.toFixed(2);
+  document.getElementById('iso-para-val').textContent = para.toFixed(2);
+
+  // Compose the SU(1,1) matrix
+  // Translation by (tx,ty): a = 1/sqrt(1-|t|^2), b = -conj(t)/sqrt(1-|t|^2) * a
+  // Actually: z -> (z - t)/(1 - conj(t)*z) = (z + b/a) / (conj(b)/conj(a) * z + 1) ...
+  // For translation by t in disk: a = 1/sqrt(1-|t|^2), b = -t/sqrt(1-|t|^2)
+  const t = [tx, ty];
+  const tn = cNorm2(t);
+  let a, b;
+  if (tn > 0.99) {
+    a = [10, 0]; b = cScale(t, -10);
+  } else {
+    const s = 1 / Math.sqrt(1 - tn);
+    a = [s, 0];
+    b = cScale(t, -s);
+  }
+
+  // Rotation: multiply a by e^(i*rot/2)
+  const rotA = cMul(a, cExp([0, rot/2]));
+  const rotB = cMul(b, cExp([0, -rot/2]));
+  // For the pure rotation it's a -> a*e^(itheta), b -> b*e^(-itheta) ... actually:
+  // rotation in SU(1,1): [[e^{i*theta/2}, 0],[0, e^{-i*theta/2}]] composed with translation
+  // Simpler: just apply rotation to a
+  let finalA = cMul(a, cExp([0, rot]));
+  let finalB = b;
+
+  // Parabolic component (limit rotation / horocyclic): approximate by translating toward boundary
+  if (Math.abs(para) > 0.01) {
+    // Parabolic isometry fixing the point 1: use upper half-plane model, translate, then back
+    // In disk model: z -> (z(1+it) - it) / (it*z + (1-it)) where t = para
+    // This is approximate
+    const pt = para * 0.1;
+    const pa = cAdd([1, 0], [0, pt]);
+    const pb = [0, -pt];
+    const pc = [0, pt];
+    const pd = cSub([1, 0], [0, pt]);
+    // Compose with existing transform
+    const newA = cAdd(cMul(pa, finalA), cMul(pb, cConj(finalB)));
+    const newB = cAdd(cMul(pa, finalB), cMul(pb, cConj(finalA)));
+    finalA = newA;
+    finalB = newB;
+  }
+
+  function transform(z) {
+    return mobiusSU11(z, finalA, finalB);
+  }
+
+  // Draw figure
+  const figure = document.getElementById('iso-figure').value;
+
+  // Draw original (dim) and transformed (bright)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, c.r - 1, 0, TWO_PI);
+  ctx.clip();
+
+  if (figure === 'triangle') {
+    const triPts = [
+      [0.0, -0.3],
+      [-0.25, 0.15],
+      [0.25, 0.15]
+    ];
+    drawFigurePoly(ctx, canvas, triPts, 'rgba(45,212,191,0.15)', 'rgba(45,212,191,0.3)', false);
+    const tPts = triPts.map(p => { const w = transform(p); return [w[0], w[1]]; });
+    drawFigurePoly(ctx, canvas, tPts, 'rgba(245,158,11,0.3)', 'rgba(245,158,11,0.8)', true);
+  } else if (figure === 'square') {
+    const sqPts = [[-0.2,-0.2],[0.2,-0.2],[0.2,0.2],[-0.2,0.2]];
+    drawFigurePoly(ctx, canvas, sqPts, 'rgba(45,212,191,0.15)', 'rgba(45,212,191,0.3)', false);
+    const tPts = sqPts.map(p => { const w = transform(p); return [w[0], w[1]]; });
+    drawFigurePoly(ctx, canvas, tPts, 'rgba(245,158,11,0.3)', 'rgba(245,158,11,0.8)', true);
+  } else if (figure === 'grid') {
+    // Draw hyperbolic grid, then transformed grid
+    for (let i = -3; i <= 3; i++) {
+      for (let j = -3; j <= 3; j++) {
+        const r = 0.12;
+        const cx0 = i * 0.25, cy0 = j * 0.25;
+        if (cx0*cx0 + cy0*cy0 > 0.85) continue;
+        const w = transform([cx0, cy0]);
+        if (cNorm2(w) < 0.99) {
+          const cp = hypToCanvas(canvas, w[0], w[1]);
+          ctx.beginPath();
+          ctx.arc(cp.x, cp.y, 3, 0, TWO_PI);
+          ctx.fillStyle = 'rgba(245,158,11,0.6)';
+          ctx.fill();
+        }
+        // Original
+        const cpo = hypToCanvas(canvas, cx0, cy0);
+        ctx.beginPath();
+        ctx.arc(cpo.x, cpo.y, 2, 0, TWO_PI);
+        ctx.fillStyle = 'rgba(45,212,191,0.3)';
+        ctx.fill();
+      }
+    }
+    // Connect grid lines
+    ctx.strokeStyle = 'rgba(245,158,11,0.2)';
+    ctx.lineWidth = 1;
+    for (let i = -3; i <= 3; i++) {
+      ctx.beginPath();
+      let started = false;
+      for (let j = -3; j <= 3; j++) {
+        const cx0 = i * 0.25, cy0 = j * 0.25;
+        if (cx0*cx0 + cy0*cy0 > 0.85) continue;
+        const w = transform([cx0, cy0]);
+        if (cNorm2(w) < 0.99) {
+          const cp = hypToCanvas(canvas, w[0], w[1]);
+          if (!started) { ctx.moveTo(cp.x, cp.y); started = true; }
+          else ctx.lineTo(cp.x, cp.y);
+        }
+      }
+      ctx.stroke();
+    }
+    for (let j = -3; j <= 3; j++) {
+      ctx.beginPath();
+      let started = false;
+      for (let i = -3; i <= 3; i++) {
+        const cx0 = i * 0.25, cy0 = j * 0.25;
+        if (cx0*cx0 + cy0*cy0 > 0.85) continue;
+        const w = transform([cx0, cy0]);
+        if (cNorm2(w) < 0.99) {
+          const cp = hypToCanvas(canvas, w[0], w[1]);
+          if (!started) { ctx.moveTo(cp.x, cp.y); started = true; }
+          else ctx.lineTo(cp.x, cp.y);
+        }
+      }
+      ctx.stroke();
+    }
+  } else if (figure === 'circle') {
+    // Circle packing
+    const circles = [
+      {x:0,y:0,r:0.15},
+      {x:0.35,y:0,r:0.1},{x:-0.35,y:0,r:0.1},
+      {x:0,y:0.35,r:0.1},{x:0,y:-0.35,r:0.1},
+      {x:0.25,y:0.25,r:0.08},{x:-0.25,y:0.25,r:0.08},
+      {x:0.25,y:-0.25,r:0.08},{x:-0.25,y:-0.25,r:0.08}
+    ];
+    circles.forEach(circ => {
+      // Draw original
+      drawHypCircle(ctx, canvas, circ.x, circ.y, circ.r, 'rgba(45,212,191,0.15)', 'rgba(45,212,191,0.3)');
+      // Transform center and a few boundary points to approximate the image
+      const wc = transform([circ.x, circ.y]);
+      // The image of a hyperbolic circle under a Mobius transform is also a circle (in the disk model)
+      // Approximate by transforming points on the boundary
+      const pts = [];
+      for (let k = 0; k <= 32; k++) {
+        const angle = TWO_PI * k / 32;
+        const bx = circ.x + circ.r * Math.cos(angle);
+        const by = circ.y + circ.r * Math.sin(angle);
+        if (bx*bx+by*by >= 0.999) continue;
+        const wb = transform([bx, by]);
+        pts.push(wb);
+      }
+      if (pts.length > 2) {
+        ctx.beginPath();
+        const fp = hypToCanvas(canvas, pts[0][0], pts[0][1]);
+        ctx.moveTo(fp.x, fp.y);
+        for (let k = 1; k < pts.length; k++) {
+          const cp = hypToCanvas(canvas, pts[k][0], pts[k][1]);
+          ctx.lineTo(cp.x, cp.y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(245,158,11,0.25)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245,158,11,0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    });
+  }
+  ctx.restore();
+
+  // Update matrix display
+  const matEl = document.getElementById('iso-matrix');
+  const ar = finalA[0].toFixed(3), ai = finalA[1].toFixed(3);
+  const br = finalB[0].toFixed(3), bi = finalB[1].toFixed(3);
+  const bcr = finalB[0].toFixed(3), bci = (-finalB[1]).toFixed(3);
+  const acr = finalA[0].toFixed(3), aci = (-finalA[1]).toFixed(3);
+  matEl.textContent =
+    `SU(1,1) matrix:\n` +
+    `[ ${ar}+${ai}i   ${br}+${bi}i ]\n` +
+    `[ ${bcr}+${bci}i   ${acr}+${aci}i ]\n\n` +
+    `det = ${(cNorm2(finalA) - cNorm2(finalB)).toFixed(4)}`;
+}
+
+function drawFigurePoly(ctx, canvas, pts, fill, stroke, isGeodesic) {
+  if (isGeodesic) {
+    // Draw with geodesic edges
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      const j = (i + 1) % pts.length;
+      const pi = {x:pts[i][0],y:pts[i][1]};
+      const pj = {x:pts[j][0],y:pts[j][1]};
+      const c = getCanvasCenter(canvas);
+      const arc = geodesicArc(pi, pj);
+      if (arc.isLine) {
+        const cp = hypToCanvas(canvas, pj.x, pj.y);
+        if (i === 0) {
+          const cp0 = hypToCanvas(canvas, pi.x, pi.y);
+          ctx.moveTo(cp0.x, cp0.y);
+        }
+        ctx.lineTo(cp.x, cp.y);
+      } else {
+        let a1 = arc.a1, a2 = arc.a2;
+        let diff = a2 - a1;
+        while (diff > PI) diff -= TWO_PI;
+        while (diff < -PI) diff += TWO_PI;
+        const midA = a1 + diff / 2;
+        const mx = arc.cx + arc.radius * Math.cos(midA);
+        const my = arc.cy + arc.radius * Math.sin(midA);
+        if (mx*mx + my*my > 1.01) diff = diff > 0 ? diff - TWO_PI : diff + TWO_PI;
+        const ccx = c.x + arc.cx * c.r;
+        const ccy = c.y + arc.cy * c.r;
+        const cr = arc.radius * c.r;
+        ctx.arc(ccx, ccy, cr, a1, a1 + diff, diff < 0);
+      }
+    }
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else {
+    // Euclidean straight lines (for dim original)
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const cp = hypToCanvas(canvas, p[0], p[1]);
+      if (i === 0) ctx.moveTo(cp.x, cp.y);
+      else ctx.lineTo(cp.x, cp.y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  // Draw vertices
+  pts.forEach(p => {
+    const cp = hypToCanvas(canvas, p[0], p[1]);
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, 4, 0, TWO_PI);
+    ctx.fillStyle = stroke;
+    ctx.fill();
+  });
+}
+
+function drawHypCircle(ctx, canvas, cx, cy, r, fill, stroke) {
+  ctx.beginPath();
+  for (let k = 0; k <= 64; k++) {
+    const angle = TWO_PI * k / 64;
+    const px = cx + r * Math.cos(angle);
+    const py = cy + r * Math.sin(angle);
+    const cp = hypToCanvas(canvas, px, py);
+    if (k === 0) ctx.moveTo(cp.x, cp.y);
+    else ctx.lineTo(cp.x, cp.y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function resetIsometry() {
+  document.getElementById('iso-tx').value = 0;
+  document.getElementById('iso-ty').value = 0;
+  document.getElementById('iso-rot').value = 0;
+  document.getElementById('iso-para').value = 0;
+  drawIsometry();
+}
+
+// ===================== TAB 5: HYPERBOLIC TRIANGLE =====================
+let triVertices = [
+  { x: 0.0, y: -0.45 },
+  { x: -0.4, y: 0.25 },
+  { x: 0.4, y: 0.25 }
+];
+let triDragging = -1;
+
+function hypAngleAtVertex(A, B, C) {
+  // Angle at vertex A of the hyperbolic triangle ABC
+  // Using the formula: cos(angle) = (cosh(b)*cosh(c) - cosh(a)) / (sinh(b)*sinh(c))
+  // where a = BC, b = AC, c = AB
+  const a = hypDist(B, C);
+  const b = hypDist(A, C);
+  const cc = hypDist(A, B);
+  const num = Math.cosh(b) * Math.cosh(cc) - Math.cosh(a);
+  const den = Math.sinh(b) * Math.sinh(cc);
+  if (Math.abs(den) < 1e-12) return 0;
+  return Math.acos(Math.max(-1, Math.min(1, num / den)));
+}
+
+function drawTriangle() {
+  const canvas = document.getElementById('canvas-triangle');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawDiskBoundary(ctx, canvas);
+  const c = getCanvasCenter(canvas);
+
+  // Draw hyperbolic grid (dim)
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let d = 0.5; d <= 3.0; d += 0.5) {
+    const r = Math.tanh(d / 2);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, r * c.r, 0, TWO_PI);
+    ctx.stroke();
+  }
+
+  const A = triVertices[0], B = triVertices[1], C = triVertices[2];
+
+  // Draw Euclidean triangle for comparison
+  if (document.getElementById('tri-show-euclidean').checked) {
+    ctx.beginPath();
+    const ca = hypToCanvas(canvas, A.x, A.y);
+    const cb = hypToCanvas(canvas, B.x, B.y);
+    const cc = hypToCanvas(canvas, C.x, C.y);
+    ctx.moveTo(ca.x, ca.y);
+    ctx.lineTo(cb.x, cb.y);
+    ctx.lineTo(cc.x, cc.y);
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(96,165,250,0.3)';
+    ctx.setLineDash([6, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(96,165,250,0.05)';
+    ctx.fill();
+    ctx.setLineDash([]);
+  }
+
+  // Draw hyperbolic triangle (geodesic arcs)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, c.r - 1, 0, TWO_PI);
+  ctx.clip();
+
+  const sides = [[A,B],[B,C],[C,A]];
+  // Fill
+  // Approximate fill by drawing the arcs
+  ctx.beginPath();
+  sides.forEach(([p, q], idx) => {
+    const arc = geodesicArc(p, q);
+    if (arc.isLine) {
+      const cp = hypToCanvas(canvas, q.x, q.y);
+      if (idx === 0) {
+        const cp0 = hypToCanvas(canvas, p.x, p.y);
+        ctx.moveTo(cp0.x, cp0.y);
+      }
+      ctx.lineTo(cp.x, cp.y);
+    } else {
+      let a1 = arc.a1, a2 = arc.a2;
+      let diff = a2 - a1;
+      while (diff > PI) diff -= TWO_PI;
+      while (diff < -PI) diff += TWO_PI;
+      const midA = a1 + diff / 2;
+      const mx = arc.cx + arc.radius * Math.cos(midA);
+      const my = arc.cy + arc.radius * Math.sin(midA);
+      if (mx*mx + my*my > 1.01) diff = diff > 0 ? diff - TWO_PI : diff + TWO_PI;
+      const ccx = c.x + arc.cx * c.r;
+      const ccy = c.y + arc.cy * c.r;
+      const cr = arc.radius * c.r;
+      ctx.arc(ccx, ccy, cr, a1, a1 + diff, diff < 0);
+    }
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(45,212,191,0.12)';
+  ctx.fill();
+
+  // Stroke sides
+  sides.forEach(([p, q]) => {
+    drawGeodesicOnCanvas(ctx, canvas, p, q, 'rgba(45,212,191,0.85)', 2.5);
+  });
+
+  ctx.restore();
+
+  // Compute angles
+  const alpha = hypAngleAtVertex(A, B, C);
+  const beta = hypAngleAtVertex(B, A, C);
+  const gamma = hypAngleAtVertex(C, A, B);
+  const angleSum = alpha + beta + gamma;
+  const defect = PI - angleSum;
+  const area = defect;
+
+  // Draw angle arcs
+  if (document.getElementById('tri-show-arcs').checked) {
+    const colors = ['rgba(245,158,11,0.7)', 'rgba(167,139,250,0.7)', 'rgba(251,113,133,0.7)'];
+    [[A,B,C,alpha],[B,A,C,beta],[C,A,B,gamma]].forEach(([V,P1,P2,angle], idx) => {
+      const cv = hypToCanvas(canvas, V.x, V.y);
+      // Compute tangent directions at V toward P1 and P2
+      const arc1 = geodesicArc(V, P1);
+      const arc2 = geodesicArc(V, P2);
+      let dir1, dir2;
+      if (arc1.isLine) {
+        const dx = P1.x-V.x, dy = P1.y-V.y;
+        const l = Math.sqrt(dx*dx+dy*dy);
+        dir1 = Math.atan2(dy/l, dx/l);
+      } else {
+        dir1 = Math.atan2(V.y - arc1.cy, V.x - arc1.cx);
+        // Tangent is perpendicular to radius
+        const midA = arc1.a1 + (arc1.a2 - arc1.a1)/2;
+        // Choose correct tangent direction (toward P1)
+        dir1 += PI/2;
+        const tx = Math.cos(dir1), ty = Math.sin(dir1);
+        const dot = tx*(P1.x-V.x) + ty*(P1.y-V.y);
+        if (dot < 0) dir1 += PI;
+      }
+      if (arc2.isLine) {
+        const dx = P2.x-V.x, dy = P2.y-V.y;
+        const l = Math.sqrt(dx*dx+dy*dy);
+        dir2 = Math.atan2(dy/l, dx/l);
+      } else {
+        dir2 = Math.atan2(V.y - arc2.cy, V.x - arc2.cx);
+        dir2 += PI/2;
+        const tx = Math.cos(dir2), ty = Math.sin(dir2);
+        const dot = tx*(P2.x-V.x) + ty*(P2.y-V.y);
+        if (dot < 0) dir2 += PI;
+      }
+      const arcR = 22 * window.devicePixelRatio;
+      ctx.beginPath();
+      let d1 = dir1, d2 = dir2;
+      let diff = d2 - d1;
+      while (diff > PI) diff -= TWO_PI;
+      while (diff < -PI) diff += TWO_PI;
+      ctx.arc(cv.x, cv.y, arcR, d1, d1 + diff, diff < 0);
+      ctx.strokeStyle = colors[idx];
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      // Label
+      const labelAngle = d1 + diff/2;
+      ctx.font = `bold ${12 * window.devicePixelRatio}px 'JetBrains Mono', monospace`;
+      ctx.fillStyle = colors[idx];
+      const labels = ['\u03B1', '\u03B2', '\u03B3'];
+      ctx.fillText(labels[idx], cv.x + (arcR+12)*Math.cos(labelAngle), cv.y + (arcR+12)*Math.sin(labelAngle));
+    });
+  }
+
+  // Draw vertices
+  const vColors = ['#f59e0b', '#a78bfa', '#fb7185'];
+  const vLabels = ['A', 'B', 'C'];
+  triVertices.forEach((v, i) => {
+    const cv = hypToCanvas(canvas, v.x, v.y);
+    ctx.beginPath();
+    ctx.arc(cv.x, cv.y, 8, 0, TWO_PI);
+    ctx.fillStyle = vColors[i];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.font = `bold ${14 * window.devicePixelRatio}px 'DM Sans', sans-serif`;
+    ctx.fillStyle = vColors[i];
+    ctx.fillText(vLabels[i], cv.x + 14, cv.y - 14);
+  });
+
+  // Update measurements
+  const sideA = hypDist(B, C), sideB = hypDist(A, C), sideC = hypDist(A, B);
+  document.getElementById('tri-angles').textContent =
+    `\u03B1=${(alpha*180/PI).toFixed(2)}\u00B0  \u03B2=${(beta*180/PI).toFixed(2)}\u00B0  \u03B3=${(gamma*180/PI).toFixed(2)}\u00B0`;
+  document.getElementById('tri-angle-sum').textContent =
+    `${(angleSum*180/PI).toFixed(2)}\u00B0  (${(angleSum/PI).toFixed(4)}\u03C0)`;
+  document.getElementById('tri-defect').textContent =
+    `${(defect*180/PI).toFixed(2)}\u00B0  (${defect.toFixed(5)} rad)`;
+  document.getElementById('tri-area').textContent =
+    `${area.toFixed(5)} (= \u03C0 - ${angleSum.toFixed(5)})`;
+  document.getElementById('tri-sides').textContent =
+    `a=${sideA.toFixed(3)}  b=${sideB.toFixed(3)}  c=${sideC.toFixed(3)}`;
+}
+
+// Triangle dragging
+const triCanvas = document.getElementById('canvas-triangle');
+triCanvas.addEventListener('mousedown', function(e) {
+  if (activeTab !== 'triangle') return;
+  const rect = this.getBoundingClientRect();
+  const p = canvasToHyp(this, e.clientX - rect.left, e.clientY - rect.top);
+  triDragging = -1;
+  triVertices.forEach((v, i) => {
+    const dx = v.x - p.x, dy = v.y - p.y;
+    if (Math.sqrt(dx*dx+dy*dy) < 0.05) triDragging = i;
+  });
+});
+triCanvas.addEventListener('mousemove', function(e) {
+  if (triDragging < 0) return;
+  const rect = this.getBoundingClientRect();
+  const p = canvasToHyp(this, e.clientX - rect.left, e.clientY - rect.top);
+  if (p.x*p.x + p.y*p.y < 0.92) {
+    triVertices[triDragging] = p;
+    drawTriangle();
+  }
+});
+triCanvas.addEventListener('mouseup', () => { triDragging = -1; });
+triCanvas.addEventListener('mouseleave', () => { triDragging = -1; });
+
+// ===================== INITIALIZATION =====================
+function initAll() {
+  ['canvas-poincare', 'canvas-tiling', 'canvas-halfplane', 'canvas-isometry', 'canvas-triangle'].forEach(id => {
+    resizeCanvas(id);
+  });
+  drawPoincare();
+  generateTiling();
+  drawHalfPlane();
+  drawIsometry();
+  drawTriangle();
+}
+
+window.addEventListener('resize', () => {
+  ['canvas-poincare', 'canvas-tiling', 'canvas-halfplane', 'canvas-isometry', 'canvas-triangle'].forEach(id => {
+    resizeCanvas(id);
+  });
+  if (activeTab === 'poincare') drawPoincare();
+  else if (activeTab === 'tiling') drawTiling();
+  else if (activeTab === 'halfplane') drawHalfPlane();
+  else if (activeTab === 'isometry') drawIsometry();
+  else if (activeTab === 'triangle') drawTriangle();
+});
+
+document.addEventListener('DOMContentLoaded', initAll);
+</script>
+</body>
+</html>
