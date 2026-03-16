@@ -546,13 +546,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const tab = btn.dataset.tab;
     document.getElementById('tab-' + tab).classList.add('active');
     activeTab = tab;
-    requestAnimationFrame(() => {
+    // Use a short delay to ensure the tab-content is visible before measuring
+    setTimeout(() => {
       if (tab === 'poincare') { resizeCanvas('canvas-poincare'); drawPoincare(); }
       else if (tab === 'tiling') { resizeCanvas('canvas-tiling'); generateTiling(); }
       else if (tab === 'halfplane') { resizeCanvas('canvas-halfplane'); drawHalfPlane(); }
       else if (tab === 'isometry') { resizeCanvas('canvas-isometry'); drawIsometry(); }
       else if (tab === 'triangle') { resizeCanvas('canvas-triangle'); drawTriangle(); }
-    });
+      tabInitialised[tab] = true;
+    }, 50);
   });
 });
 
@@ -1883,22 +1885,20 @@ triCanvas.addEventListener('mouseleave', () => { triDragging = -1; });
 
 // ===================== INITIALIZATION =====================
 function initAll() {
-  ['canvas-poincare', 'canvas-tiling', 'canvas-halfplane', 'canvas-isometry', 'canvas-triangle'].forEach(id => {
-    resizeCanvas(id);
-  });
+  // Only resize and draw the active tab on load;
+  // other tabs get resized+drawn when first activated.
+  resizeCanvas('canvas-poincare');
   drawPoincare();
-  generateTiling();
-  drawHalfPlane();
-  drawIsometry();
-  drawTriangle();
 }
 
+const tabInitialised = { poincare: true, tiling: false, halfplane: false, isometry: false, triangle: false };
+
 window.addEventListener('resize', () => {
-  ['canvas-poincare', 'canvas-tiling', 'canvas-halfplane', 'canvas-isometry', 'canvas-triangle'].forEach(id => {
-    resizeCanvas(id);
-  });
+  // Only resize the active (visible) canvas
+  const canvasMap = { poincare: 'canvas-poincare', tiling: 'canvas-tiling', halfplane: 'canvas-halfplane', isometry: 'canvas-isometry', triangle: 'canvas-triangle' };
+  if (canvasMap[activeTab]) resizeCanvas(canvasMap[activeTab]);
   if (activeTab === 'poincare') drawPoincare();
-  else if (activeTab === 'tiling') drawTiling();
+  else if (activeTab === 'tiling') generateTiling();
   else if (activeTab === 'halfplane') drawHalfPlane();
   else if (activeTab === 'isometry') drawIsometry();
   else if (activeTab === 'triangle') drawTriangle();
